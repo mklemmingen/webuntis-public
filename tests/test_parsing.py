@@ -1,124 +1,261 @@
-"""Tests for JSON parsing logic."""
+"""Tests for WebUntis REST v1 response parsing."""
 
 import datetime
 
 from webuntis_public.models import ElementType
-from webuntis_public.parsing import parse_pageconfig, parse_weekly_response
+from webuntis_public.parsing import parse_entries_response, parse_filter_response
 
 
 # -- Fixtures --
 
-WEEKLY_RESPONSE = {
-    "data": {
-        "result": {
-            "data": {
-                "elementPeriods": {
-                    "100": [
+FILTER_RESPONSE = {
+    "resourceType": "CLASS",
+    "classes": [
+        {
+            "class": {
+                "id": 21899,
+                "shortName": "3MKIB6",
+                "longName": "Medien- und Kommunikationsinformatik",
+                "displayName": "3MKIB6",
+            },
+            "classTeacher1": None,
+            "classTeacher2": None,
+            "department": {
+                "id": 64,
+                "shortName": "LS-P",
+                "longName": "LS - PRÜFUNG",
+                "displayName": "LS - PRÜFUNG",
+            },
+        },
+        {
+            "class": {
+                "id": 22371,
+                "shortName": "1ACB",
+                "longName": "Angewandte Chemie, Bachelor",
+                "displayName": "1ACB",
+            },
+            "classTeacher1": None,
+            "classTeacher2": None,
+            "department": None,
+        },
+    ],
+    "resources": [],
+    "rooms": [],
+    "subjects": [],
+    "students": [],
+    "teachers": [],
+}
+
+ENTRIES_RESPONSE = {
+    "format": 2,
+    "days": [
+        {
+            "date": "2026-03-23",
+            "resourceType": "CLASS",
+            "resource": {
+                "id": 21899,
+                "shortName": "3MKIB6",
+                "longName": "Medien- und Kommunikationsinformatik",
+                "displayName": "",
+            },
+            "status": "REGULAR",
+            "dayEntries": [],
+            "gridEntries": [
+                {
+                    "ids": [4940783],
+                    "duration": {
+                        "start": "2026-03-23T08:00",
+                        "end": "2026-03-23T09:30",
+                    },
+                    "type": "NORMAL_TEACHING_PERIOD",
+                    "status": "REGULAR",
+                    "position1": [
                         {
-                            "date": 20260302,
-                            "startTime": 800,
-                            "endTime": 930,
-                            "elements": [
-                                {"type": 3, "id": 50},
-                                {"type": 2, "id": 10},
-                                {"type": 4, "id": 20},
-                                {"type": 1, "id": 100},
-                            ],
-                            "lessonId": 999,
-                            "lessonCode": "",
-                            "cellState": "STANDARD",
-                            "lessonText": "",
-                            "periodText": "",
-                        },
+                            "current": {
+                                "type": "SUBJECT",
+                                "status": "REGULAR",
+                                "shortName": "MATH",
+                                "longName": "Mathematics",
+                                "displayName": "Mathematics",
+                            },
+                            "removed": None,
+                        }
+                    ],
+                    "position2": [
                         {
-                            "date": 20260303,
-                            "startTime": 1000,
-                            "endTime": 1130,
-                            "elements": [
-                                {"type": 3, "id": 51},
-                            ],
-                            "cellState": "CANCEL",
-                            "lessonId": 1000,
-                        },
-                    ]
+                            "current": {
+                                "type": "ROOM",
+                                "status": "REGULAR",
+                                "shortName": "A101",
+                                "longName": "Room A101",
+                                "displayName": "A101",
+                            },
+                            "removed": None,
+                        }
+                    ],
+                    "position3": [
+                        {
+                            "current": {
+                                "type": "TEACHER",
+                                "status": "REGULAR",
+                                "shortName": "Mueller",
+                                "longName": "Prof. Mueller",
+                                "displayName": "Mueller",
+                            },
+                            "removed": None,
+                        }
+                    ],
+                    "position4": [
+                        {
+                            "current": {
+                                "type": "CLASS",
+                                "status": "REGULAR",
+                                "shortName": "3MKIB6",
+                                "longName": "MKIB Semester 6",
+                                "displayName": "3MKIB6",
+                            },
+                            "removed": None,
+                        }
+                    ],
+                    "texts": [
+                        {"type": "LESSON_INFO", "text": "Extra info"}
+                    ],
+                    "lessonInfo": "Extra info",
+                    "substitutionText": "",
                 },
-                "elements": [
-                    {"type": 3, "id": 50, "name": "MATH", "longName": "Mathematics", "alternatename": "MA"},
-                    {"type": 3, "id": 51, "name": "PHYS", "longName": "Physics"},
-                    {"type": 2, "id": 10, "name": "Mueller", "longName": "Prof. Mueller"},
-                    {"type": 4, "id": 20, "name": "A101", "longName": "Room A101"},
-                    {"type": 1, "id": 100, "name": "3MKIB4", "longName": "MKIB Semester 4"},
-                ],
-            }
-        }
-    }
+                {
+                    "ids": [4940800],
+                    "duration": {
+                        "start": "2026-03-23T10:00",
+                        "end": "2026-03-23T11:30",
+                    },
+                    "type": "NORMAL_TEACHING_PERIOD",
+                    "status": "CANCEL",
+                    "position1": [
+                        {
+                            "current": {
+                                "type": "SUBJECT",
+                                "status": "REGULAR",
+                                "shortName": "PHYS",
+                                "longName": "Physics",
+                                "displayName": "Physics",
+                            },
+                            "removed": None,
+                        }
+                    ],
+                    "position2": [],
+                    "position3": [],
+                    "position4": None,
+                    "texts": [],
+                    "lessonInfo": "",
+                    "substitutionText": "",
+                },
+            ],
+            "backEntries": [],
+        },
+        {
+            "date": "2026-03-24",
+            "resourceType": "CLASS",
+            "resource": {"id": 21899},
+            "status": "NO_DATA",
+            "dayEntries": [],
+            "gridEntries": [],
+            "backEntries": [],
+        },
+    ],
+    "errors": [],
 }
 
-PAGECONFIG_RESPONSE = {
-    "data": {
-        "elements": [
-            {"type": 1, "id": 100, "name": "3MKIB4", "longName": "MKIB Semester 4"},
-            {"type": 1, "id": 101, "name": "3MKIB6", "longName": "MKIB Semester 6"},
-            {"type": 2, "id": 10, "name": "Mueller", "longName": "Prof. Mueller"},
-        ]
-    }
-}
+
+class TestParseFilterResponse:
+    def test_returns_class_groups(self):
+        groups = parse_filter_response(FILTER_RESPONSE)
+        assert len(groups) == 2
+
+    def test_group_fields(self):
+        groups = parse_filter_response(FILTER_RESPONSE)
+        assert groups[0].id == 21899
+        assert groups[0].name == "3MKIB6"
+        assert groups[0].long_name == "Medien- und Kommunikationsinformatik"
+
+    def test_second_group(self):
+        groups = parse_filter_response(FILTER_RESPONSE)
+        assert groups[1].id == 22371
+        assert groups[1].name == "1ACB"
+
+    def test_empty_response(self):
+        groups = parse_filter_response({"classes": []})
+        assert groups == []
+
+    def test_missing_classes_key(self):
+        groups = parse_filter_response({})
+        assert groups == []
 
 
-class TestParseWeeklyResponse:
+class TestParseEntriesResponse:
     def test_returns_weekly_timetable(self):
-        wt = parse_weekly_response(WEEKLY_RESPONSE, class_id=100)
-        assert wt.class_id == 100
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
+        assert wt.class_id == 21899
 
     def test_filters_cancelled(self):
-        wt = parse_weekly_response(WEEKLY_RESPONSE, class_id=100)
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
         assert len(wt.periods) == 1
 
     def test_resolves_subject(self):
-        wt = parse_weekly_response(WEEKLY_RESPONSE, class_id=100)
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
         period = wt.periods[0]
         assert len(period.subjects) == 1
         subj = period.subjects[0]
         assert subj.name == "MATH"
         assert subj.long_name == "Mathematics"
-        assert subj.alternate_name == "MA"
         assert subj.type == ElementType.SUBJECT
 
     def test_resolves_teacher(self):
-        wt = parse_weekly_response(WEEKLY_RESPONSE, class_id=100)
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
         period = wt.periods[0]
         assert len(period.teachers) == 1
         assert period.teachers[0].long_name == "Prof. Mueller"
 
     def test_resolves_room(self):
-        wt = parse_weekly_response(WEEKLY_RESPONSE, class_id=100)
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
         period = wt.periods[0]
         assert len(period.rooms) == 1
         assert period.rooms[0].name == "A101"
 
-    def test_date_and_time(self):
-        wt = parse_weekly_response(WEEKLY_RESPONSE, class_id=100)
+    def test_resolves_class(self):
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
         period = wt.periods[0]
-        assert period.date == datetime.date(2026, 3, 2)
+        assert len(period.classes) == 1
+        assert period.classes[0].name == "3MKIB6"
+
+    def test_date_and_time(self):
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
+        period = wt.periods[0]
+        assert period.date == datetime.date(2026, 3, 23)
         assert period.start_time == datetime.time(8, 0)
         assert period.end_time == datetime.time(9, 30)
 
+    def test_lesson_id(self):
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
+        assert wt.periods[0].lesson_id == 4940783
+
+    def test_lesson_text(self):
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
+        assert wt.periods[0].lesson_text == "Extra info"
+
     def test_empty_response(self):
-        wt = parse_weekly_response({"data": {"result": {"data": {}}}}, class_id=100)
+        wt = parse_entries_response(
+            {"format": 2, "days": [], "errors": []}, class_id=100,
+        )
         assert len(wt.periods) == 0
 
+    def test_infers_week_start_from_periods(self):
+        wt = parse_entries_response(ENTRIES_RESPONSE, class_id=21899)
+        assert wt.week_start == datetime.date(2026, 3, 23)
 
-class TestParsePageconfig:
-    def test_returns_class_groups_only(self):
-        groups = parse_pageconfig(PAGECONFIG_RESPONSE)
-        assert len(groups) == 2
-
-    def test_group_fields(self):
-        groups = parse_pageconfig(PAGECONFIG_RESPONSE)
-        assert groups[0].id == 100
-        assert groups[0].name == "3MKIB4"
-        assert groups[0].long_name == "MKIB Semester 4"
-
-    def test_empty_response(self):
-        groups = parse_pageconfig({"data": {"elements": []}})
-        assert groups == []
+    def test_explicit_week_start(self):
+        wt = parse_entries_response(
+            ENTRIES_RESPONSE, class_id=21899,
+            week_start_date=datetime.date(2026, 3, 22),
+        )
+        assert wt.week_start == datetime.date(2026, 3, 22)

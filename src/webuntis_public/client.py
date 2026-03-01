@@ -1,4 +1,4 @@
-"""HTTP client for the WebUntis public timetable API."""
+"""HTTP client for the WebUntis public timetable REST API."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import time as _time
 import requests
 
 from .models import ClassGroup, SemesterTimetable, WeeklyTimetable
-from .parsing import parse_pageconfig, parse_weekly_response
+from .parsing import parse_entries_response, parse_filter_response
 from .semester import iter_mondays
 
 
@@ -17,15 +17,18 @@ class WebUntisError(Exception):
 
 
 class WebUntisPublicClient:
-    """Client for the WebUntis public (unauthenticated) timetable API.
+    """Client for the WebUntis public (anonymous) timetable REST API.
+
+    Uses the ``/api/rest/view/v1/timetable/`` endpoints with the
+    ``anonymous-school`` header for unauthenticated access.
 
     Parameters
     ----------
     server:
         Hostname of the WebUntis instance, e.g. ``"hs-reutlingen.webuntis.com"``.
     school:
-        Optional school name for the URL path.  Most public endpoints do not
-        require this, but it is kept for forward-compatibility.
+        School identifier used in the ``anonymous-school`` HTTP header.
+        Required for anonymous access (e.g. ``"hs-reutlingen"``).
     rate_limit:
         Minimum seconds to wait between consecutive HTTP requests.
     """
@@ -42,8 +45,10 @@ class WebUntisPublicClient:
         self._rate_limit = rate_limit
         self._last_request: float = 0.0
         self._session = requests.Session()
-        self._session.headers.update({"User-Agent": "webuntis-public/0.1.0"})
-        self._base_url = f"https://{server}/WebUntis/api/public/timetable/weekly"
+        self._session.headers.update({"User-Agent": "webuntis-public/0.2.0"})
+        if school:
+            self._session.headers["anonymous-school"] = school
+        self._base_url = f"https://{server}/WebUntis/api/rest/view/v1/timetable"
 
     def _get(self, url: str, params: dict | None = None) -> dict:
         """Perform a rate-limited GET request and return JSON."""
@@ -61,9 +66,9 @@ class WebUntisPublicClient:
 
     def list_classes(self) -> list[ClassGroup]:
         """Return all class groups available on this WebUntis server."""
-        url = f"{self._base_url}/pageConfig"
-        data = self._get(url)
-        return parse_pageconfig(data)
+        url = f"{self._base_url}/filter"
+        data = self._get(url, params={"resourceType": "CLASS"})
+        return parse_filter_response(data)
 
     def find_classes(self, pattern: str) -> list[ClassGroup]:
         """Return class groups whose name contains *pattern* (case-insensitive)."""
@@ -86,27 +91,34 @@ class WebUntisPublicClient:
         class_id:
             The numeric element ID of the class.
         date:
-            Any date within the desired week (the API rounds to the enclosing
-            Monday–Friday range).  Accepts a :class:`datetime.date` or an
-            ISO-format string.
+            Any date within the desired week.  Accepts a :class:`datetime.date`
+            or an ISO-format string.
         """
         if isinstance(date, datetime.date):
             date_str = date.strftime("%Y-%m-%d")
         else:
             date_str = date
-        url = f"{self._base_url}/data"
+
+        # Compute Monday and Friday of the week
+        if isinstance(date, str):
+            ref = datetime.date.fromisoformat(date_str)
+        else:
+            ref = date
+        monday = ref - datetime.timedelta(days=ref.weekday())
+        saturday = monday + datetime.timedelta(days=5)
+
+        url = f"{self._base_url}/entries"
         params = {
-            "elementType": 1,
-            "elementId": class_id,
-            "date": date_str,
-            "formatId": 1,
+            "start": monday.strftime("%Y-%m-%d"),
+            "end": saturday.strftime("%Y-%m-%d"),
+            "format": "2",
+            "resourceType": "CLASS",
+            "resources": str(class_id),
+            "timetableType": "STANDARD",
+            "layout": "START_TIME",
         }
         raw = self._get(url, params)
-        week_date = (
-            datetime.date.fromisoformat(date_str)
-            if isinstance(date, str) else date
-        )
-        return parse_weekly_response(raw, class_id, week_start_date=week_date)
+        return parse_entries_response(raw, class_id, week_start_date=monday)
 
     def fetch_semester(
         self,
@@ -123,7 +135,7 @@ class WebUntisPublicClient:
         class_id:
             The numeric element ID of the class.
         start, end:
-            Date range (inclusive) — every Monday in between is fetched.
+            Date range (inclusive) -- every Monday in between is fetched.
         on_error:
             ``"warn"`` (default) prints errors and continues,
             ``"raise"`` re-raises the first exception,

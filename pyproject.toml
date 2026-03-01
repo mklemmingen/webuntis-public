@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "webuntis-public"
-version = "0.1.0"
+version = "0.2.0"
 description = "Python client for the WebUntis public timetable REST API (no authentication required)"
 readme = "README.md"
 license = "Apache-2.0"
