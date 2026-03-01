@@ -76,4 +76,4 @@ All models are frozen dataclasses:
 
 ## License
 
-MIT
+Apache-2.0
