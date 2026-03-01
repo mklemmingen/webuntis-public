@@ -1,16 +1,16 @@
-name: Publish webuntis-public
+name: Publish to PyPI
 
 on:
   push:
     tags: ['v*']
 
-permissions:
-  id-token: write
-  contents: read
+permissions: {}
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,6 +22,8 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,6 +35,7 @@ jobs:
         with:
           name: dist
           path: dist/
+          if-no-files-found: error
 
   publish:
     needs: build
@@ -40,9 +43,10 @@ jobs:
     environment: pypi
     permissions:
       id-token: write
+      contents: read
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@v1.12.4
