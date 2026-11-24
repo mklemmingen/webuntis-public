@@ -3,6 +3,8 @@
 Python client for the [WebUntis](https://www.untis.at/) **public** timetable REST API.
 No authentication or API key required.
 
+> **Note:** Hochschule Reutlingen, used in the examples below, has moved its timetables from WebUntis to HISinOne. The client still works for schools that use WebUntis; replace the server name with your own school's.
+
 ## Installation
 
 ```bash
